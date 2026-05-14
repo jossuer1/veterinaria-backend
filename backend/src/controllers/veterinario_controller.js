@@ -59,34 +59,91 @@ const recuperarPassword= async(req,res)=> {
 
         const veterinarioBDD = await Veterinario.findOne({email})
         if(!veterinarioBDD) return res.status(404).json({msg:"el usuario no se encuentra registrado"})
+
         //paso 3
         const token = veterinarioBDD.createToken()
         veterinarioBDD.token =token 
         await sendMailToRecoveryPassword(email,token)
         await veterinarioBDD.save()
+
         //paso 4
         res.status(200).json({msg:"Revisa tu correo electronico para restableces tu cuenta"})
-    }catch(error){
-        res.status(500).json({msg: "❌ Error en el servidor"})
-    }
-}
-
-const comprobarTokenPassword= async(req,res)=> {
-     try{
 
     }catch(error){
         res.status(500).json({msg: "❌ Error en el servidor"})
     }
 }
 
-const crearNuevoPassword= async(req,res)=> {
-     try{
+const comprobarTokenPassword = async (req, res) => {
+  try {
 
-    }catch(error){
-        res.status(500).json({msg: "❌ Error en el servidor"})
+    const { token } = req.params
+
+    const veterinarioBDD =
+      await Veterinario.findOne({ token })
+
+    if (!veterinarioBDD) {
+      return res.status(404).json({
+        msg: "Lo sentimos, no se puede recuperar la contraseña"
+      })
     }
-}
 
+    res.status(200).json({
+      msg: "Token confirmado"
+    })
+
+  } catch (error) {
+
+    console.log(error)
+
+    res.status(500).json({
+      msg: "❌ Error en el servidor"
+    })
+  }
+}
+const crearNuevoPassword = async (req, res) => {
+  try {
+
+    const { token } = req.params
+    const { password, confirmpassword } = req.body
+
+    // 👇 AQUÍ DEPURACIÓN
+    console.log("TOKEN RECIBIDO:", token)
+
+    const veterinarioBDD = await Veterinario.findOne({ token })
+
+    // 👇 AQUÍ DEPURACIÓN
+    console.log("USUARIO ENCONTRADO:", veterinarioBDD)
+
+    if (!veterinarioBDD) {
+      return res.status(404).json({
+        msg: "No se puede validar la cuenta"
+      })
+    }
+
+    if (password !== confirmpassword) {
+      return res.status(400).json({
+        msg: "Las contraseñas no coinciden"
+      })
+    }
+
+    veterinarioBDD.token = null
+    veterinarioBDD.password = await veterinarioBDD.encryptPassword(password)
+
+    await veterinarioBDD.save()
+
+    res.status(200).json({
+      msg: "Contraseña actualizada correctamente"
+    })
+
+  } catch (error) {
+    console.log("ERROR COMPLETO:", error)
+
+    res.status(500).json({
+      msg: "❌ Error en el servidor"
+    })
+  }
+}
 
 
 
