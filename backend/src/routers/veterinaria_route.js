@@ -3,7 +3,9 @@ import {
   confirmarMail,
   crearNuevoPassword,
   recuperarPassword,
-  registro
+  comprobarTokenPassword, // ← Corregido: Importación añadida
+  registro,
+  login
 } from '../controllers/veterinario_controller.js'
 
 const router = Router()
@@ -14,10 +16,16 @@ router.post("/registro", registro)
 // Confirmar cuenta
 router.get("/confirmar/:token", confirmarMail)
 
-// Recuperar password (envía email)
-router.post("/recuperarPassword", recuperarPassword)
+// Recuperar password (envía email de recuperación)
+router.post("/reset", recuperarPassword)
 
-// Cambiar password directamente
+// Verificar el token desde la URL del correo (VISTA RESET)
+router.get("/reset/:token", comprobarTokenPassword) // ← Corregido: Ruta añadida
+
+// Cambiar password directamente (FORMULARIO RESET)
 router.post("/nuevopassword/:token", crearNuevoPassword)
+
+// Login
+router.post('/login', login)
 
 export default router

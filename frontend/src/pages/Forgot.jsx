@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'; // Asegúrate de que sea react-router-dom
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { ToastContainer, toast } from 'react-toastify';
 import { useFetch } from '../hooks/useFetch';
@@ -9,10 +9,10 @@ export const Forgot = () => {
 
     const sendMail = async (dataForm) => {
         try {
-            const url = `${import.meta.env.VITE_BACKEND_URL}/recuperarpassword`;
-            const response = await fetchDataBackend(url, dataForm, 'POST');
+            // CORREGIDO: Se cambió la ruta para que apunte a /reset
+            const url = `${import.meta.env.VITE_BACKEND_URL}/reset`;
+            await fetchDataBackend(url, dataForm, 'POST');
             
-            // Si tu useFetch no lanza error automáticamente, verifica la respuesta aquí
             toast.success("Si el correo existe, se enviará un enlace de recuperación.");
         } catch (error) {
             toast.error("Hubo un error al procesar la solicitud.");

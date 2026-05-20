@@ -1,119 +1,131 @@
-import logoDog from "../assets/dog-hand.webp";
-import { useState, useEffect } from "react";
-import { useFetch } from "../hooks/useFetch";
-import { ToastContainer, toast } from "react-toastify";
-import { useNavigate, useParams, Link } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import logoDog from '../assets/dog-hand.webp'
+import { useState, useEffect } from 'react'
+import { useFetch } from '../hooks/useFetch'
+import { ToastContainer } from 'react-toastify'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
 
 const Reset = () => {
-    const navigate = useNavigate();
-    const { token } = useParams();
-    const { fetchDataBackend, loading } = useFetch();
+    const navigate = useNavigate()
+    const { token } = useParams()
+    const { fetchDataBackend, loading } = useFetch()
+    const [tokenBack, setTokenBack] = useState(false)
 
-    // Estados para la validación del token
-    const [tokenValido, setTokenValido] = useState(false);
-    const [verificando, setVerificando] = useState(true);
+    // CORREGIDO: Se agregó 'watch' para poder comparar las contraseñas en tiempo real
+    const {
+        register,
+        handleSubmit,
+        watch,
+        formState: { errors }
+    } = useForm()
 
-    const { register, handleSubmit, formState: { errors }, watch } = useForm();
+    // Cambiar contraseña
+    const changePassword = async (dataForm) => {
+        const url = `${import.meta.env.VITE_BACKEND_URL}/nuevopassword/${token}`
+        const response = await fetchDataBackend(url, dataForm, 'POST')
 
-    // Verificar si el token es válido al cargar el componente
+        // Si el backend responde con éxito, redirige al Login
+        if (response) {
+            setTimeout(() => {
+                navigate('/login')
+            }, 2000)
+        }
+    }
+
+    // Verificar token al cargar el componente
     useEffect(() => {
         const verifyToken = async () => {
             try {
-                const url = `${import.meta.env.VITE_BACKEND_URL}/recuperarpassword/${token}`;
-                // Si fetchDataBackend falla, debería lanzar un error que capture el catch
-                await fetchDataBackend(url, "GET");
-                setTokenValido(true);
+                const url = `${import.meta.env.VITE_BACKEND_URL}/reset/${token}`
+                // CORREGIDO: Cambiado de 'POST' a 'GET' para consumir el validador del backend
+                await fetchDataBackend(url, undefined, 'GET')
+                setTokenBack(true)
             } catch (error) {
-                setTokenValido(false);
-                toast.error("Token inválido o expirado");
-            } finally {
-                setVerificando(false);
+                setTokenBack(false)
             }
-        };
-        if (token) verifyToken();
-    }, [token]);
-
-    const changePassword = async (dataForm) => {
-        try {
-            const url = `${import.meta.env.VITE_BACKEND_URL}/nuevopassword/${token}`;
-            await fetchDataBackend(url, dataForm, "POST");
-            toast.success("Contraseña actualizada correctamente");
-            setTimeout(() => navigate("/login"), 1500);
-        } catch (error) {
-            toast.error("No se pudo actualizar la contraseña");
         }
-    };
+        verifyToken()
+    }, [token])
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 px-4">
+        <div className="flex flex-col items-center justify-center h-screen">
             <ToastContainer />
 
+            <h1 className="text-3xl font-semibold mb-2 text-center text-gray-500">
+                Bienvenido nuevamente
+            </h1>
+
+            <small className="text-gray-400 block my-4 text-sm">
+                Por favor, ingrese los siguientes datos
+            </small>
+
             <img
-                className={`object-cover h-60 w-60 rounded-full border-4 border-solid ${verificando ? 'border-gray-200' : tokenValido ? 'border-slate-600' : 'border-red-400'} mb-6`}
+                className="object-cover h-80 w-80 rounded-full border-4 border-solid border-slate-600"
                 src={logoDog}
-                alt="logo"
+                alt="logo dog"
             />
 
-            {verificando ? (
-                <p className="text-xl text-gray-500 animate-pulse">Verificando enlace...</p>
-            ) : tokenValido ? (
-                <div className="w-full max-w-md">
-                    <h1 className="text-3xl font-semibold mb-2 text-center text-gray-500">
-                        Bienvenido nuevamente
-                    </h1>
-                    <p className="text-gray-400 text-center mb-6 text-sm">
-                        Por favor, ingrese su nueva contraseña
-                    </p>
+            {tokenBack ? (
+                <form
+                    className="w-80 mt-5"
+                    onSubmit={handleSubmit(changePassword)}
+                >
+                    <div className="mb-4">
+                        {/* Nueva contraseña */}
+                        <label className="mb-2 block text-sm font-semibold">
+                            Nueva contraseña
+                        </label>
+                        <input
+                            type="password"
+                            placeholder="Ingresa tu nueva contraseña"
+                            className="block w-full rounded-md border border-gray-300 py-2 px-2 text-gray-500"
+                            {...register("password", {
+                                required: "La contraseña es obligatoria"
+                            })}
+                        />
+                        {errors.password && (
+                            <p className="text-red-800 text-sm">
+                                {errors.password.message}
+                            </p>
+                        )}
+                    </div>
 
-                    <form className="bg-white p-8 shadow-lg rounded-2xl" onSubmit={handleSubmit(changePassword)}>
-                        <div className="mb-4">
-                            <label className="mb-2 block text-sm font-semibold">Nueva contraseña</label>
-                            <input
-                                type="password"
-                                placeholder="Mínimo 6 caracteres"
-                                className="block w-full rounded-md border border-gray-300 py-2 px-3 text-gray-600 focus:outline-none focus:border-blue-500"
-                                {...register("password", {
-                                    required: "La contraseña es obligatoria",
-                                    minLength: { value: 6, message: "Mínimo 6 caracteres" },
-                                })}
-                            />
-                            {errors.password && <p className="text-red-700 text-xs mt-1">{errors.password.message}</p>}
-                        </div>
+                    <div className="mb-4">
+                        {/* Confirmar contraseña */}
+                        <label className="mb-2 block text-sm font-semibold">
+                            Confirmar contraseña
+                        </label>
+                        <input
+                            type="password"
+                            placeholder="Repite tu contraseña"
+                            className="block w-full rounded-md border border-gray-300 py-2 px-2 text-gray-500"
+                            {...register("confirmpassword", {
+                                required: "Debes confirmar la contraseña",
+                                // CORREGIDO: Ahora 'watch' funciona perfectamente en el cliente
+                                validate: (value) => value === watch("password") || "Las contraseñas no coinciden"
+                            })}
+                        />
+                        {errors.confirmpassword && (
+                            <p className="text-red-800 text-sm">
+                                {errors.confirmpassword.message}
+                            </p>
+                        )}
+                    </div>
 
-                        <div className="mb-6">
-                            <label className="mb-2 block text-sm font-semibold">Confirmar contraseña</label>
-                            <input
-                                type="password"
-                                placeholder="Repite tu contraseña"
-                                className="block w-full rounded-md border border-gray-300 py-2 px-3 text-gray-600 focus:outline-none focus:border-blue-500"
-                                {...register("confirmpassword", {
-                                    required: "Debes confirmar la contraseña",
-                                    validate: (value) => value === watch('password') || "Las contraseñas no coinciden"
-                                })}
-                            />
-                            {errors.confirmpassword && <p className="text-red-700 text-xs mt-1">{errors.confirmpassword.message}</p>}
-                        </div>
-
+                    <div className="mb-3">
                         <button
-                            className="bg-gray-700 text-white py-2 w-full rounded-xl hover:bg-gray-900 transition-colors disabled:opacity-50"
+                            className="bg-gray-600 text-slate-300 border py-2 w-full rounded-xl hover:scale-105 duration-300 hover:bg-gray-900 hover:text-white"
                             disabled={loading}
                         >
-                            {loading ? "Actualizando..." : "Cambiar Contraseña"}
+                            {loading ? 'Enviando...' : 'Guardar contraseña'}
                         </button>
-                    </form>
-                </div>
+                    </div>
+                </form>
             ) : (
-                <div className="text-center">
-                    <h2 className="text-2xl font-bold text-red-600 mb-2">Enlace no válido</h2>
-                    <p className="text-gray-500 mb-6">El enlace ha expirado o ya fue utilizado.</p>
-                    <Link to="/forgot-password" size="sm" className="bg-blue-600 text-white px-6 py-2 rounded-lg">
-                        Solicitar nuevo enlace
-                    </Link>
-                </div>
+                <p className="text-red-600 mt-5 text-sm font-semibold">Token inválido o expirado. Solicita un nuevo enlace.</p>
             )}
         </div>
-    );
-};
+    )
+}
 
-export default Reset;
+export default Reset

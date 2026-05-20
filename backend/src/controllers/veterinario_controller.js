@@ -107,14 +107,7 @@ const crearNuevoPassword = async (req, res) => {
     const { token } = req.params
     const { password, confirmpassword } = req.body
 
-    // 👇 AQUÍ DEPURACIÓN
-    console.log("TOKEN RECIBIDO:", token)
-
     const veterinarioBDD = await Veterinario.findOne({ token })
-
-    // 👇 AQUÍ DEPURACIÓN
-    console.log("USUARIO ENCONTRADO:", veterinarioBDD)
-
     if (!veterinarioBDD) {
       return res.status(404).json({
         msg: "No se puede validar la cuenta"
@@ -145,6 +138,36 @@ const crearNuevoPassword = async (req, res) => {
   }
 }
 
+const login = async(req,res)=>{
+
+    try {
+        // Paso 1
+        const {email,password} = req.body
+        // Paso 2
+        if (Object.values(req.body).includes("")) return res.status(404).json({msg:"Debes llenar todos los campos"})
+        const veterinarioBDD = await Veterinario.findOne({email}).select("-status -__v -token -updatedAt -createdAt")
+        if(!veterinarioBDD) return res.status(404).json({msg:"El usuario no se encuentra registrado"})
+        if(!veterinarioBDD.confirmEmail) return res.status(403).json({msg:"Debes verificar tu cuenta antes de iniciar sesión"})
+        const verificarPassword = await veterinarioBDD.matchPassword(password)
+        if(!verificarPassword) return res.status(401).json({msg:"El password no es correcto"})
+        // Paso 3
+        const {nombre,apellido,direccion,telefono,_id,rol} = veterinarioBDD
+        // Paso 4
+        res.status(200).json({
+            rol,
+            nombre,
+            apellido,
+            direccion,
+            telefono,
+            _id,
+            email:veterinarioBDD.email
+        })
+
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ msg: `❌ Error en el servidor - ${error}` })
+    }
+}
 
 
 export {
@@ -152,5 +175,6 @@ export {
     confirmarMail,
     recuperarPassword,
     comprobarTokenPassword,
-    crearNuevoPassword
+    crearNuevoPassword,
+    login
 }

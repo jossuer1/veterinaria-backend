@@ -1,14 +1,29 @@
 import { useState } from "react"
 import { MdVisibility, MdVisibilityOff } from "react-icons/md"
-import { Link } from "react-router"
-
-
+import { Link, useNavigate } from "react-router-dom" // ← Asegurada la importación desde react-router-dom
+import { useFetch } from '../hooks/useFetch'
+import { ToastContainer } from 'react-toastify'
+import { useForm } from 'react-hook-form'
 
 const Login = () => {
-    const [showPassword, setShowPassword] = useState(false);
+    
+    const [showPassword, setShowPassword] = useState(false)
+    const navigate = useNavigate()
+    const { register, handleSubmit, formState: { errors } } = useForm()
+    const { fetchDataBackend, loading } = useFetch()
+
+    const loginUser = async (dataForm) => {
+        const url = `${import.meta.env.VITE_BACKEND_URL}/login`
+        const response = await fetchDataBackend(url, dataForm, 'POST')
+        if (response) {
+            navigate('/dashboard')
+        }
+    }
 
     return (
         <div className="flex flex-col sm:flex-row h-screen">
+
+            <ToastContainer />
 
             {/* Imagen */}
             <div className="hidden sm:block sm:w-1/2 bg-[url('/public/images/doglogin.jpg')] bg-cover bg-center"></div>
@@ -24,7 +39,7 @@ const Login = () => {
 
 
                     {/* Formulario */}
-                    <form>
+                    <form onSubmit={handleSubmit(loginUser)}>
 
                         {/* Campo Correo */}
                         <div className="mb-3">
@@ -33,7 +48,9 @@ const Login = () => {
                                 type="email"
                                 placeholder="Ingresa tu correo"
                                 className="w-full rounded-md border border-gray-300 focus:ring-1 px-2 py-1 text-gray-500"
+                                {...register("email", { required: "El correo es obligatorio" })}
                             />
+                            {errors.email && <p className="text-red-800 text-sm mt-1">{errors.email.message}</p>}
                         </div>
 
 
@@ -46,8 +63,10 @@ const Login = () => {
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     placeholder="************"
-                                    className="w-full rounded-md border border-gray-300 px-3 py-2 pr-10"
+                                    className="w-full rounded-md border border-gray-300 px-3 py-2 pr-10 text-gray-500"
+                                    {...register("password", { required: "La contraseña es obligatoria" })}
                                 />
+                                {errors.password && <p className="text-red-800 text-sm mt-1">{errors.password.message}</p>}
 
                                 <button
                                     type="button"
@@ -62,9 +81,13 @@ const Login = () => {
 
 
                         {/* Botón login */}
-                        <Link to="/dashboard" className="block w-full py-2 text-center bg-gray-500 text-white rounded-xl hover:bg-gray-900 duration-300">
-                            Iniciar sesión
-                        </Link>
+                        <button 
+                            className="py-2 w-full block text-center bg-gray-500 text-slate-300 border rounded-xl 
+                            hover:scale-100 duration-300 hover:bg-gray-900 hover:text-white disabled:opacity-50" 
+                            disabled={loading}
+                        >
+                            {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+                        </button>
 
                     </form>
 
@@ -79,18 +102,18 @@ const Login = () => {
 
                     {/* Botón Google */}
                     <button className="w-full mt-5 flex items-center justify-center border py-2 rounded-xl text-sm hover:bg-black hover:text-white">
-                        <img className="w-5 mr-2" src="https://cdn-icons-png.flaticon.com/512/281/281764.png" />
+                        <img className="w-5 mr-2" src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google logo" />
                         Sign in with Google
                     </button>
 
 
                     {/* Enlace para olvidaste tu contraseña */}
                     <div className="mt-5 text-xs border-b-2 py-4 text-left">
+                        {/* Se mantiene la ruta original con el parámetro tal como lo tenías en tu App */}
                         <Link to="/forgot/id" className="underline text-gray-400 hover:text-gray-900">
                             ¿Olvidaste tu contraseña?
                         </Link>
                     </div>
-
 
 
                     {/* Enlaces para volver o registrarse */}
@@ -98,7 +121,6 @@ const Login = () => {
                         <Link to="/" className="underline text-gray-400 hover:text-gray-900">Regresar</Link>
                         <Link to="/register" className="py-2 px-5 bg-gray-600 text-white rounded-xl hover:bg-gray-900">Registrarse</Link>
                     </div>
-
 
                 </div>
             </div>
