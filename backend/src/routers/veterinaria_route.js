@@ -3,29 +3,31 @@ import {
   confirmarMail,
   crearNuevoPassword,
   recuperarPassword,
-  comprobarTokenPassword, // ← Corregido: Importación añadida
+  comprobarTokenPassword,
   registro,
-  login
+  login,
+  perfil
 } from '../controllers/veterinario_controller.js'
+
+// IMPORTAMOS EL MIDDLEWARE QUE CREASTE
+import { verificarTokenJWT } from '../middlewares/JWT.js' // <-- Ajusta la ruta a donde guardaste tu helper de JWT
 
 const router = Router()
 
-// Registro
+// ==========================================
+// RUTAS PÚBLICAS (No requieren Token)
+// ==========================================
 router.post("/registro", registro)
-
-// Confirmar cuenta
 router.get("/confirmar/:token", confirmarMail)
-
-// Recuperar password (envía email de recuperación)
 router.post("/reset", recuperarPassword)
-
-// Verificar el token desde la URL del correo (VISTA RESET)
-router.get("/reset/:token", comprobarTokenPassword) // ← Corregido: Ruta añadida
-
-// Cambiar password directamente (FORMULARIO RESET)
+router.get("/reset/:token", comprobarTokenPassword)
 router.post("/nuevopassword/:token", crearNuevoPassword)
-
-// Login
 router.post('/login', login)
+
+
+// ==========================================
+// RUTAS PRIVADAS (Requieren Token)
+// ==========================================
+router.get("/perfil", verificarTokenJWT, perfil)
 
 export default router

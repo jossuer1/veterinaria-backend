@@ -1,3 +1,5 @@
+import { crearTokenJWT } from "../middlewares/JWT.js"
+
 import { sendMailToRecoveryPassword, sendMailToRegister } from "../helpers/sendMail.js"
 import Veterinario from "../models/Veterinario.js"
 
@@ -152,9 +154,11 @@ const login = async(req,res)=>{
         if(!verificarPassword) return res.status(401).json({msg:"El password no es correcto"})
         // Paso 3
         const {nombre,apellido,direccion,telefono,_id,rol} = veterinarioBDD
+
+        const token = crearTokenJWT(_id, rol || "veterinario");
         // Paso 4
         res.status(200).json({
-            rol,
+            token,
             nombre,
             apellido,
             direccion,
@@ -169,6 +173,24 @@ const login = async(req,res)=>{
     }
 }
 
+const perfil = (req, res) => {
+  try {
+    // 💡 Tu middleware ya guardó al veterinario autenticado aquí:
+    const usuarioAutenticado = req.veterinarioHeader;
+
+    if (!usuarioAutenticado) {
+      return res.status(404).json({ msg: "No se encontró el perfil del usuario" });
+    }
+
+    // Devolvemos la información completa de manera segura
+    return res.status(200).json(usuarioAutenticado);
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ msg: "❌ Error en el servidor al obtener el perfil" });
+  }
+}
+
 
 export {
     registro,
@@ -176,5 +198,6 @@ export {
     recuperarPassword,
     comprobarTokenPassword,
     crearNuevoPassword,
-    login
+    login,
+    perfil
 }
