@@ -2,7 +2,8 @@ import { crearTokenJWT } from "../middlewares/JWT.js"
 
 import { sendMailToRecoveryPassword, sendMailToRegister } from "../helpers/sendMail.js"
 import Veterinario from "../models/Veterinario.js"
-
+import router from "../routers/veterinaria_route.js"
+import mongoose from "mongoose"
 const registro = async (req, res) => {
 
     try {
@@ -191,6 +192,41 @@ const perfil = (req, res) => {
   }
 }
 
+const actualizarPerfil = async(req,res) =>{
+  try{
+    const{id} =req.params
+    const{nombre,apellido,direccion,celular,email} = req.body
+
+    if(Object.values(req.body).includes("")) return res.status(400).json({msg:"Debes llenar todos los parametros"})
+
+    if(!mongoose.Types.ObjectId.isValid(id)) return res.status(404).json({msg:"El ide no es el correcto"})
+
+    const veterinariaBDD = await Veterinario.findById(id)
+    if(!veterinariaBDD) return res.status(404).json({msg:`No existe el veterinario con ID ${id}`})
+
+    if(veterinariaBDD.email !== email){
+      const emailExistente = await Veterinario.findOne({email})
+      if(emailExistente){
+        return res.status(409).json({msg:'el email ya se encuentra registrado'})
+      }
+    }
+
+    veterinariaBDD.nombre = nombre ??  veterinariaBDD.nombre
+    veterinariaBDD.apellido = apellido ?? veterinariaBDD.apellido
+    veterinariaBDD.direccion = direccion ?? veterinariaBDD.direccion
+    veterinariaBDD.celular = celular ?? veterinariaBDD.celular
+    veterinariaBDD.email = email ?? veterinariaBDD.email
+
+    await veterinariaBDD.save()
+
+    res.status(200).json(veterinariaBDD)
+
+  }catch(error){
+    console.log(error)
+    res.status(500).json({msg:"Error del servidor"})
+  }
+}
+
 
 export {
     registro,
@@ -199,5 +235,6 @@ export {
     comprobarTokenPassword,
     crearNuevoPassword,
     login,
-    perfil
+    perfil,
+    actualizarPerfil
 }

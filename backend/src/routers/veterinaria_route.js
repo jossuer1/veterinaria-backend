@@ -6,7 +6,8 @@ import {
   comprobarTokenPassword,
   registro,
   login,
-  perfil
+  perfil,
+  actualizarPerfil
 } from '../controllers/veterinario_controller.js'
 
 // IMPORTAMOS EL MIDDLEWARE QUE CREASTE
@@ -29,5 +30,6 @@ router.post('/login', login)
 // RUTAS PRIVADAS (Requieren Token)
 // ==========================================
 router.get("/perfil", verificarTokenJWT, perfil)
+router.put("/actualizarperfil/:id",verificarTokenJWT,actualizarPerfil)
 
 export default router
