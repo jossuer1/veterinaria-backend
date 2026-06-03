@@ -7,7 +7,8 @@ import {
   registro,
   login,
   perfil,
-  actualizarPerfil
+  actualizarPerfil,
+  actualizarPassword
 } from '../controllers/veterinario_controller.js'
 
 // IMPORTAMOS EL MIDDLEWARE QUE CREASTE
@@ -31,5 +32,6 @@ router.post('/login', login)
 // ==========================================
 router.get("/perfil", verificarTokenJWT, perfil)
 router.put("/actualizarperfil/:id",verificarTokenJWT,actualizarPerfil)
+router.put("/actualizarpassword/:id",verificarTokenJWT,actualizarPassword)
 
 export default router

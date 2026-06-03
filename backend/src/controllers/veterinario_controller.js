@@ -199,7 +199,7 @@ const actualizarPerfil = async(req,res) =>{
 
     if(Object.values(req.body).includes("")) return res.status(400).json({msg:"Debes llenar todos los parametros"})
 
-    if(!mongoose.Types.ObjectId.isValid(id)) return res.status(404).json({msg:"El ide no es el correcto"})
+    if(!mongoose.Types.ObjectId.isValid(id)) return res.status(404).json({msg:"El id no es el correcto"})
 
     const veterinariaBDD = await Veterinario.findById(id)
     if(!veterinariaBDD) return res.status(404).json({msg:`No existe el veterinario con ID ${id}`})
@@ -227,6 +227,41 @@ const actualizarPerfil = async(req,res) =>{
   }
 }
 
+const actualizarPassword = async (req, res) => {
+  try {
+
+    const { id } = req.params
+    const {passwordActual,passwordNueva,confirmPassword } = req.body
+
+    if (Object.values(req.body).includes("")) {return res.status(400).json({msg: "Debes llenar todos los parámetros"})}
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {return res.status(404).json({msg: "El id no es correcto"})}
+
+    const veterinariaBDD = await Veterinario.findById(id)
+
+    if (!veterinariaBDD) { return res.status(404).json({msg: `No existe el veterinario con ID ${id}`})}
+
+    const verificarPassword =await veterinariaBDD.matchPassword(passwordActual)
+
+    if (!verificarPassword) {return res.status(400).json({msg: "Lo sentimos, el password actual no es correcto"}) }
+
+    if (passwordNueva !== confirmPassword) {return res.status(400).json({ msg: "Las contraseñas no coinciden"}) }
+
+    veterinariaBDD.password =await veterinariaBDD.encryptPassword(passwordNueva)
+
+    await veterinariaBDD.save()
+
+    return res.status(200).json({ msg: "Contraseña actualizada correctamente"})
+
+  } catch (error) {
+    console.log(error)
+
+    return res.status(500).json({
+      msg: `Error en el servidor: ${error.message}`
+    })
+  }
+}
+
 
 export {
     registro,
@@ -236,5 +271,6 @@ export {
     crearNuevoPassword,
     login,
     perfil,
-    actualizarPerfil
+    actualizarPerfil,
+    actualizarPassword
 }
