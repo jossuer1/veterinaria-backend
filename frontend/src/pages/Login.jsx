@@ -1,22 +1,35 @@
 import { useState } from "react"
 import { MdVisibility, MdVisibilityOff } from "react-icons/md"
-import { Link, useNavigate } from "react-router-dom" // ← Asegurada la importación desde react-router-dom
+import { Link, useNavigate } from "react-router-dom"
 import { useFetch } from '../hooks/useFetch'
 import { ToastContainer } from 'react-toastify'
 import { useForm } from 'react-hook-form'
 
+import storeAuth from "../context/storeAuth"
+
 const Login = () => {
-    
     const [showPassword, setShowPassword] = useState(false)
+    
     const navigate = useNavigate()
     const { register, handleSubmit, formState: { errors } } = useForm()
+    
+    // CORRECCIÓN: Extraemos de useFetch tanto la función como el loading nativo de tu hook
     const { fetchDataBackend, loading } = useFetch()
+    const { setToken, setRol } = storeAuth()
 
     const loginUser = async (dataForm) => {
-        const url = `${import.meta.env.VITE_BACKEND_URL}/login`
-        const response = await fetchDataBackend(url, dataForm, 'POST')
-        if (response) {
-            navigate('/dashboard')
+        try {
+            const url = `${import.meta.env.VITE_BACKEND_URL}/login`
+            const response = await fetchDataBackend(url, dataForm, 'POST')
+            
+            // Validamos que exista respuesta ANTES de guardar los datos en el store
+            if (response) {
+                setToken(response.token)
+                setRol(response.rol)
+                navigate('/dashboard')
+            }
+        } catch (error) {
+            console.error("Error en el login:", error)
         }
     }
 
@@ -28,7 +41,6 @@ const Login = () => {
             {/* Imagen */}
             <div className="hidden sm:block sm:w-1/2 bg-[url('/public/images/doglogin.jpg')] bg-cover bg-center"></div>
 
-
             <div className="w-full sm:w-1/2 flex justify-center items-center bg-white">
 
                 <div className="w-4/5">
@@ -36,7 +48,6 @@ const Login = () => {
                     <h1 className="text-3xl font-semibold text-center text-gray-500">Bienvenido(a)</h1>
                 
                     <p className="text-gray-400 text-center my-4">Por favor ingresa tus datos</p>
-
 
                     {/* Formulario */}
                     <form onSubmit={handleSubmit(loginUser)}>
@@ -53,10 +64,8 @@ const Login = () => {
                             {errors.email && <p className="text-red-800 text-sm mt-1">{errors.email.message}</p>}
                         </div>
 
-
                         {/* Campo Contraseña */}
                         <div className="mb-3">
-                            
                             <label className="block text-sm font-semibold mb-1">Contraseña</label>
 
                             <div className="relative">
@@ -79,18 +88,16 @@ const Login = () => {
                             </div>
                         </div>
 
-
                         {/* Botón login */}
                         <button 
                             className="py-2 w-full block text-center bg-gray-500 text-slate-300 border rounded-xl 
                             hover:scale-100 duration-300 hover:bg-gray-900 hover:text-white disabled:opacity-50" 
-                            disabled={loading}
+                            disabled={loading} // ← Ahora usa el loading real de tu useFetch
                         >
                             {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
                         </button>
 
                     </form>
-
 
                     {/* Separador */}
                     <div className="mt-6 flex items-center text-gray-400">
@@ -99,22 +106,18 @@ const Login = () => {
                         <hr className="flex-1" />
                     </div>
 
-
                     {/* Botón Google */}
                     <button className="w-full mt-5 flex items-center justify-center border py-2 rounded-xl text-sm hover:bg-black hover:text-white">
                         <img className="w-5 mr-2" src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google logo" />
                         Sign in with Google
                     </button>
 
-
                     {/* Enlace para olvidaste tu contraseña */}
                     <div className="mt-5 text-xs border-b-2 py-4 text-left">
-                        {/* Se mantiene la ruta original con el parámetro tal como lo tenías en tu App */}
                         <Link to="/forgot/id" className="underline text-gray-400 hover:text-gray-900">
                             ¿Olvidaste tu contraseña?
                         </Link>
                     </div>
-
 
                     {/* Enlaces para volver o registrarse */}
                     <div className="mt-3 flex justify-between text-sm">
