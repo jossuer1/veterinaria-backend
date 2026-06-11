@@ -1,32 +1,50 @@
-// Requerir módulos
 import express from 'express'
 import dotenv from 'dotenv'
-import cors from 'cors';
+import cors from 'cors'
 
-// todo lo que se importe abajo (incluyendo las rutas) ya pueda leer el .env
+import cloudinary from 'cloudinary'
+import fileUpload from "express-fileupload"
+
+import routerVeterinario from './routers/veterinaria_route.js'
+import routerPacientes from './routers/paciente_route.js'
+
 dotenv.config()
 
-// Ahora sí cargamos el router de forma segura
-import router from './routers/veterinaria_route.js'
-
-// Inicializaciones
 const app = express()
 
-// Configuraciones 
-
-// Middlewares -C
+// Middlewares
 app.use(express.json())
 app.use(cors())
 
-// Variables globales y de entorno
-// usar el puerto de la variable de entorno si existe, sino usar el 3000
-app.set('port', process.env.PORT || 3000)
+// Puerto
+app.set('port', process.env.PORT || 8000)
 
-// Rutas 
-app.get('/', (req, res) => res.send("Server on"))
+// Ruta principal
+app.get('/', (req, res) => {
+    res.send('Server on')
+})
 
-// Enlazamos el router con el prefijo /api
-app.use('/api', router)
 
-// Exportar la instancia de express por medio de app
+// Configuraciones
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+})
+
+
+// Middlewares
+app.use(express.json())
+app.use(cors())
+
+app.use(fileUpload({
+    useTempFiles : true,
+    tempFileDir : './uploads'
+}))
+
+
+// Rutas API
+app.use('/api', routerVeterinario)
+app.use('/api', routerPacientes)
+
 export default app
