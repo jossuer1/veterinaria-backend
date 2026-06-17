@@ -1,9 +1,7 @@
 const API_URL = "https://router.huggingface.co/nscale/v1/images/generations"
 const API_KEY = import.meta.env.VITE_HUGGINGFACE_API_KEY
 
-
 async function generateAvatar(promptFormUser) {
-	
     const response = await fetch(API_URL, {
         method: "POST",
         headers: {
@@ -15,64 +13,32 @@ async function generateAvatar(promptFormUser) {
             prompt: promptFormUser
         }),
     })
-	
-	
+
     const data = await response.json()
 
     if (!data?.data?.[0]?.b64_json) {
         console.error("API ERROR:", data)
+        throw new Error("No se pudo obtener la imagen de la API de Hugging Face")
     }
-	// 1
-    const base64 = data.data[0].b64_json
-	// 2
-    const byteCharacters = atob(base64)
-	// 3
+
+    // 1. Extraemos el string Base64 puro
+    const base64Raw = data.data[0].b64_json
+    // Le añadimos el prefijo de datos data:image/png;base64 para que sea una URI válida
+    const base64Full = `data:image/png;base64,${base64Raw}`
+
+    // 2. Procesión tradicional a Blob para visualización local óptima
+    const byteCharacters = atob(base64Raw)
     const byteArray = Uint8Array.from(byteCharacters, c => c.charCodeAt(0))
-	// 4
     const blob = new Blob([byteArray], { type: "image/png" })
-	
-    return blob
+    
+    // 3. Creamos la URL temporal para el <img src="..." />
+    const localImageUrl = URL.createObjectURL(blob)
+
+    // Retornamos ambos valores: el base64 estructurado para el backend y la url para la vista
+    return {
+        base64Full,
+        localImageUrl
+    }
 }
 
-export default generateAvatar 
-
-
-/* 
- Imagen de la API  => 🐕 "b64_json": "iVBORw0KGgoAAAANSUhEUgAA..."
-   ↓
-1)Base64  => "iVBORw0KGgoAAAANSUhEUgAA..."
-   ↓
-2) atob()  => Datos decodificados de la imagen
-   ↓
-3) Bytes   => [137,80,78,71,13,10,26,10,...]
-   ↓
-4) Blob    => 🐕 Imagen PNG en memoria {🐕,type:image/png}
-   ↓
-Imagen utilizable en React
-
-
-*/
-
-
-/* 
-Prompt
-  ↓
-API
-  ↓
-🐕 (Base64)
-  ↓
-generateAvatar()
-  ↓
-Blob
-  ↓
-File("avatar.png")
-  ↓
-URL.createObjectURL(blob)
-  ↓
-blob:http://localhost:5173/abc123
-  ↓
-<img src={imageUrl}>
-  ↓
-🐕 Imagen visible
-
-*/
+export default generateAvatar

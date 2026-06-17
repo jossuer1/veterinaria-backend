@@ -1,33 +1,42 @@
 import { create } from "zustand"
 import axios from "axios"
 import { toast } from "react-toastify"
+import storeAuth from "./storeAuth" // Verifica que la ruta a tu storeAuth sea correcta
 
 const getAuthHeaders = () => {
-    const storedUser = JSON.parse(localStorage.getItem("auth-token"))
+    // 1. Intentamos obtener el token directamente del estado de Zustand
+    let token = storeAuth.getState().token;
+
+    // 2. Si Zustand aún está rehidratando (asíncrono), lo rescatamos directo del LocalStorage
+    if (!token) {
+        const localData = JSON.parse(localStorage.getItem("auth-token"));
+        token = localData?.state?.token;
+    }
+
     return {
         headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${storedUser?.state?.token}`,
+            Authorization: token ? `Bearer ${token}` : "",
         },
     }
 }
 
-
 const storeProfile = create((set) => ({
-        
     user: null,
     clearUser: () => set({ user: null }),
     profile: async () => {
         try {
             const url = `${import.meta.env.VITE_BACKEND_URL}/perfil`
+            
+            // Pasamos las cabeceras actualizadas en tiempo real
             const respuesta = await axios.get(url, getAuthHeaders())
             set({ user: respuesta.data })
         } catch (error) {
-            console.error(error)
+            console.error("Error en profile():", error)
         }
     },
 
-    updateProfile:async(url, data)=>{
+    updateProfile: async (url, data) => {
         try {
             const respuesta = await axios.put(url, data, getAuthHeaders())
             set({ user: respuesta.data })
@@ -37,9 +46,8 @@ const storeProfile = create((set) => ({
             toast.error(error.response?.data?.msg)
         }
     },
-
      
-    updatePasswordProfile:async(url,data)=>{
+    updatePasswordProfile: async (url, data) => {
         try {
             const respuesta = await axios.put(url, data, getAuthHeaders())
             return respuesta
@@ -48,9 +56,6 @@ const storeProfile = create((set) => ({
             toast.error(error.response?.data?.msg)
         }
     }
-
-    })
-
-)
+}))
 
 export default storeProfile

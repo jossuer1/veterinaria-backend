@@ -13,7 +13,6 @@ const Login = () => {
     const navigate = useNavigate()
     const { register, handleSubmit, formState: { errors } } = useForm()
     
-    // CORRECCIÓN: Extraemos de useFetch tanto la función como el loading nativo de tu hook
     const { fetchDataBackend, loading } = useFetch()
     const { setToken, setRol } = storeAuth()
 
@@ -21,12 +20,17 @@ const Login = () => {
         try {
             const url = `${import.meta.env.VITE_BACKEND_URL}/login`
             const response = await fetchDataBackend(url, dataForm, 'POST')
-            
-            // Validamos que exista respuesta ANTES de guardar los datos en el store
+
             if (response) {
-                setToken(response.token)
-                setRol(response.rol)
-                navigate('/dashboard')
+                // Validación segura por si viene dentro de .data o en la raíz
+                const tokenDestino = response.token || response.data?.token
+                const rolDestino = response.rol || response.data?.rol
+
+                if (tokenDestino) {
+                    setToken(tokenDestino)
+                    setRol(rolDestino)
+                    navigate('/dashboard')
+                } 
             }
         } catch (error) {
             console.error("Error en el login:", error)
@@ -38,8 +42,8 @@ const Login = () => {
 
             <ToastContainer />
 
-            {/* Imagen */}
-            <div className="hidden sm:block sm:w-1/2 bg-[url('/public/images/doglogin.jpg')] bg-cover bg-center"></div>
+            {/* CORRECCIÓN: Ruta de la imagen optimizada para Vite (sin /public) */}
+            <div className="hidden sm:block sm:w-1/2 bg-[url('/images/doglogin.jpg')] bg-cover bg-center"></div>
 
             <div className="w-full sm:w-1/2 flex justify-center items-center bg-white">
 
@@ -92,7 +96,7 @@ const Login = () => {
                         <button 
                             className="py-2 w-full block text-center bg-gray-500 text-slate-300 border rounded-xl 
                             hover:scale-100 duration-300 hover:bg-gray-900 hover:text-white disabled:opacity-50" 
-                            disabled={loading} // ← Ahora usa el loading real de tu useFetch
+                            disabled={loading}
                         >
                             {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
                         </button>
