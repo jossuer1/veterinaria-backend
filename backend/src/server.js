@@ -12,8 +12,9 @@ dotenv.config()
 
 const app = express()
 
-// Middlewares
-app.use(express.json())
+// Middlewares - CONFIGURADOS CON LÍMITE AMPLIADO PARA IMÁGENES BASE64 (IA)
+app.use(express.json({ limit: '50mb' }))
+app.use(express.urlencoded({ limit: '50mb', extended: true }))
 app.use(cors())
 
 // Puerto
@@ -24,24 +25,18 @@ app.get('/', (req, res) => {
     res.send('Server on')
 })
 
-
-// Configuraciones
+// Configuraciones de Cloudinary
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET
 })
 
-
-// Middlewares
-app.use(express.json())
-app.use(cors())
-
+// Middleware para subida de archivos locales
 app.use(fileUpload({
     useTempFiles : true,
     tempFileDir : './uploads'
 }))
-
 
 // Rutas API
 app.use('/api', routerVeterinario)

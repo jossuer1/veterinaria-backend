@@ -10,7 +10,13 @@ async function generateAvatar(promptFormUser) {
         },
         body: JSON.stringify({
             model: "stabilityai/stable-diffusion-xl-base-1.0",
-            prompt: promptFormUser
+            prompt: promptFormUser,
+            
+            // 🛠️ AGREGA ESTOS PARÁMETROS CRUCIALES DE CONFIGURACIÓN:
+            width: 1024,         // Ancho nativo requerido por SDXL
+            height: 1024,        // Alto nativo requerido por SDXL
+            steps: 25,           // Fija los pasos para asegurar que complete el renderizado
+            response_format: "b64_json"
         }),
     })
 
@@ -23,18 +29,15 @@ async function generateAvatar(promptFormUser) {
 
     // 1. Extraemos el string Base64 puro
     const base64Raw = data.data[0].b64_json
-    // Le añadimos el prefijo de datos data:image/png;base64 para que sea una URI válida
     const base64Full = `data:image/png;base64,${base64Raw}`
 
-    // 2. Procesión tradicional a Blob para visualización local óptima
-    const byteCharacters = atob(base64Raw)
-    const byteArray = Uint8Array.from(byteCharacters, c => c.charCodeAt(0))
-    const blob = new Blob([byteArray], { type: "image/png" })
+    // 2. Conversión limpia a Blob para la vista previa local en tiempo real
+    const resBlob = await fetch(base64Full)
+    const blob = await resBlob.blob()
     
-    // 3. Creamos la URL temporal para el <img src="..." />
+    // 3. URL temporal para pintar en el <img src="..." />
     const localImageUrl = URL.createObjectURL(blob)
 
-    // Retornamos ambos valores: el base64 estructurado para el backend y la url para la vista
     return {
         base64Full,
         localImageUrl
